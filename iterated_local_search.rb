@@ -1,5 +1,5 @@
 def euc_2d( c1, c2)
-  Math.sqrt( (c1[0] - c2[0])**2 + (c1[1] - c2[0])**2)
+  Math.sqrt( (c1[0] - c2[0])**2 + (c1[1] - c2[1])**2)
 end
 
 def cost( permutation, cities )
@@ -12,12 +12,7 @@ def cost( permutation, cities )
 end
 
 def random_permutation( cities )
-  perm = Array.new( cities.size ){ |i| i }
-  perm.each_index do |i|
-    r = rand( perm.size-i ) + i
-    perm[r], perm[i] = perm[i], perm[r]
-  end
-  return perm
+  (0...cities.size).to_a.shuffle
 end
 
 def stochastic_two_opt( permutation )
@@ -45,8 +40,8 @@ end
 
 def double_bridge_move(perm)
   pos1 = 1 + rand(perm.size / 4)
-  pos2 = pos1 + rand(perm.size / 4 )
-  pos3 = pos2 + rand(perm.size / 4 )
+  pos2 = 1 + pos1 + rand(perm.size / 4 )
+  pos3 = 1 + pos2 + rand(perm.size / 4 )
   p1 = perm[0...pos1] + perm[pos3..perm.size]
   p2 = perm[pos2...pos3] + perm[pos1...pos2]
   return p1 + p2
@@ -62,7 +57,7 @@ def search( cities, max_iterations, max_no_improv)
   best = {}
   best[:vector] = random_permutation(cities)
   best[:cost]   =  cost( best[:vector], cities )
-  best = local_search( best, cities, max_no_improv)
+  best          = local_search( best, cities, max_no_improv)
   max_iterations.times do |iter|
     c = perturbation( cities, best)
     c = local_search( c, cities, max_no_improv)
@@ -85,7 +80,7 @@ berlin52 = [[565,575],[25,185],[345,750],[945,685],[845,655],
 max_iter = 100
 max_no_improv = 50
 best = search(berlin52, max_iter, max_no_improv)
-print best[:cost],"\n"
+puts "#{best}\n"
 
 
 

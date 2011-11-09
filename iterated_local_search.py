@@ -2,12 +2,13 @@
 # Applied to the Berlin52 Traveling salesman problem.
 # The optimal solutions is 7542 units
 
-from __future__ import division
-from math import sqrt
 from random import shuffle, randint
 
 def euclidean( c1, c2 ):
-    return sqrt(sum([(x[0]-x[1])**2 for x in zip(c1,c2)]))
+    return ((c1[0] - c2[0])**2 + (c1[1] - c2[1]) ** 2)**0.5
+    #return (sum([(val - c2[i])**2 for i, val in enumerate( c1 )]))**0.5   
+    #return (sum([(x[0]-x[1])**2 for x in zip(c1,c2)]))**0.5
+
 
 def cost( permutation, cities ):
     distance = 0
@@ -20,15 +21,24 @@ def random_permutation( cities ):
     perm = range(len(cities))
     shuffle(perm)
     return perm
-    
+
 def stochastic_two_opt( permutation ):
     perm = permutation[:]
     c1, c2 = randint(0,len(perm)), randint(0,len(perm))
     exclude = [c1]
-    exclude.append( len(perm)-1 if c1==0 else c1-1 )
-    exclude.append( 0 if c2==len(perm)-1 else c1+1 )
+    if c1 == 0:
+        exclude.append( len(perm) - 1)
+    else:
+        exclude.append( c1 - 1)
+        
+    if c2 == len(perm) - 1:
+        exclude.append( 0)
+    else:
+        exclude.append( c1 + 1 )
+        
     while c2 in exclude:
         c2 = randint(0, len(perm))
+        
     c1, c2 = [c2, c1] if c2 < c1 else [c1, c2]
     c1c2_rev = perm[c1:c2]
     c1c2_rev.reverse()
@@ -38,12 +48,13 @@ def stochastic_two_opt( permutation ):
 
 def local_search( best, cities, max_no_improv ):
     count = 0
-    while count >= max_no_improv:
-        candidate = { 'vector':stochastic_two_opt(best['vector']) }
-        candidate['cost'] = cost( candidate['vector'], cities )
-        if candidate['cost'] < best['cost']:
+    while count <= max_no_improv:
+        vec   = stochastic_two_opt(best['vector'])
+        vcost = cost(vec, cities)
+        if vcost < best['cost']:
             count = 0
-            best = candidate
+            best['vector'] = vec
+            best['cost'  ] = vcost
         else:
             count+=1
     return best
@@ -56,23 +67,22 @@ def double_bridge_move(perm):
     p2 = perm[pos2:pos3] + perm[pos1:pos2]
     return p1 + p2
 
-
 def perturbation( cities, best ):
-	candidate = {'vector': double_bridge_move( best['vector'])}
-	candidate.setdefault( 'cost', cost(candidate['vector'], cities))
-	return candidate
+    candidate = {'vector': double_bridge_move( best['vector'])}
+    candidate['cost'] = cost(candidate['vector'], cities)
+    vector = double_bridge_move( best['vector'] )
+    return candidate
 	
 def search( cities, max_iterations, max_no_improv):
 	best = {'vector': random_permutation( cities )}
-	best.setdefault('cost', cost(best['vector'], cities))
+	best['cost'] = cost(best['vector'], cities)
 	best = local_search(best,cities, max_no_improv)
-	for itr in range(0, max_iterations):
+	for itr in xrange(0, max_iterations):
             candidate = perturbation( cities, best )
             candidate = local_search(candidate, cities, max_no_improv)
             if candidate['cost'] < best['cost']:
                 best = candidate
 	return best
-
 
 berlin52 = [[565,575],[25,185],[345,750],[945,685],[845,655],
 	[880,660],[25,230],[525,1000],[580,1175],[650,1130],[1605,620],
